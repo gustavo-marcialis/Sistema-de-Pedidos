@@ -1,6 +1,6 @@
-using FluentAssertions.Common;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using PizzaAPI.Models;
 
 namespace PizzaAPI
@@ -10,36 +10,38 @@ namespace PizzaAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // Add services to the container.
-            builder.Services.AddControllers();
-            builder.Services.AddCors();
-            builder.Services.AddDbContext<pizzariaContext>(
-                options => options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            // 1. Configuração de Segurança (SC-900: Identidade como Perímetro)
+            // Isso prepara a API para validar tokens vindos do Microsoft Entra ID
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+
+            // 2. Configuração do Banco de Dados
+            builder.Services.AddDbContext<pizzariaContext>(
+                options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            // Swagger habilitado para facilitar testes e demonstrações
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
 
-            app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            // 3. Configuração de CORS (Permite que o Frontend Next.js chame esta API)
+            app.UseCors(options => options
+                .AllowAnyOrigin() // Em produção real, restrinja para o domínio da Vercel
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => {
-                endpoints.MapControllers();
-            });
+            // 4. Ativação dos Middlewares de Segurança (Ordem é crucial!)
+            app.UseAuthentication(); // Verifica QUEM é o usuário
+            app.UseAuthorization();  // Verifica O QUE ele pode fazer
 
             app.MapControllers();
 
