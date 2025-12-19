@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Microsoft.EntityFrameworkCore;
 using PizzaAPI.Models;
-using Microsoft.OpenApi.Models; // <--- Importante para o Swagger
+using Microsoft.OpenApi.Models;
 
 namespace PizzaAPI
 {
@@ -12,23 +12,22 @@ namespace PizzaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Configura a Autenticação
+            // 1. Configura Autenticação
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-            // 2. Configura o Banco
-            builder.Services.AddDbContext<pizzariaContext>(
-                options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            // 2. BANCO EM MEMÓRIA (Grátis e Rápido)
+            // O nome "PizzariaDb" é onde os dados ficam guardados na RAM
+            builder.Services.AddDbContext<pizzariaContext>(options => 
+                options.UseInMemoryDatabase("PizzariaDb"));
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
-            // 3. Configura o Swagger COM O CADEADO (JWT Support)
+            // 3. Swagger Seguro
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PizzaAPI", Version = "v1" });
-
-                // Define que a API usa segurança "Bearer" (Token)
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "Cole seu token JWT aqui: Bearer {seu_token}",
@@ -37,43 +36,34 @@ namespace PizzaAPI
                     Type = SecuritySchemeType.ApiKey,
                     Scheme = "Bearer"
                 });
-
-                // Adiciona o requisito de segurança globalmente
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new string[] {}
-                    }
+                    { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, new string[] {} }
                 });
             });
 
             var app = builder.Build();
 
-            // Ativa o Swagger
+            // Garante que o banco existe (mesmo na memória)
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<pizzariaContext>();
+                db.Database.EnsureCreated();
+            }
+
+            // Swagger na Raiz
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                options.RoutePrefix = string.Empty;
+            });
 
             app.UseHttpsRedirection();
             app.UseRouting();
-
-            // CORS
-            app.UseCors(options => options
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
-
-            // 4. Ativa a Segurança
+            app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();
