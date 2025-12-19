@@ -90,9 +90,3 @@ O projeto utiliza uma esteira de CI/CD moderna:
 | `PUT` | `/api/API/alterarStatus/{id}` | 🔐 **Pizzaiolo** | Atualiza o status (ex: "No Forno"). |
 
 ---
-
-### Autor
-**Gustavo Marcialis**
-*Desenvolvedor FullStack*
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/gustavo-marcialis/)
