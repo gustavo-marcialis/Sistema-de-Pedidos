@@ -11,12 +11,11 @@ namespace PizzaAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Configuração de Segurança (SC-900: Identidade como Perímetro)
-            // Isso prepara a API para validar tokens vindos do Microsoft Entra ID
+            // 1. Configura a Autenticação (Lê o bloco AzureAd do appsettings)
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-            // 2. Configuração do Banco de Dados
+            // 2. Configura o Banco de Dados (Lê a ConnectionString)
             builder.Services.AddDbContext<pizzariaContext>(
                 options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -26,22 +25,22 @@ namespace PizzaAPI
 
             var app = builder.Build();
 
-            // Swagger habilitado para facilitar testes e demonstrações
+            // Ativa o Swagger para você testar (mesmo publicado)
             app.UseSwagger();
             app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            // 3. Configuração de CORS (Permite que o Frontend Next.js chame esta API)
+            // 3. Configura CORS (Permite acesso de qualquer lugar por enquanto)
             app.UseCors(options => options
-                .AllowAnyOrigin() // Em produção real, restrinja para o domínio da Vercel
+                .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader());
 
-            // 4. Ativação dos Middlewares de Segurança (Ordem é crucial!)
-            app.UseAuthentication(); // Verifica QUEM é o usuário
-            app.UseAuthorization();  // Verifica O QUE ele pode fazer
+            // 4. Ativa os Guardas de Segurança (Ordem obrigatória!)
+            app.UseAuthentication(); // Quem é você?
+            app.UseAuthorization();  // O que você pode fazer?
 
             app.MapControllers();
 
