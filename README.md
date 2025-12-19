@@ -1,6 +1,6 @@
 # Sistema de Pedidos API - Secure Cloud Architecture
 
-> **🔗 Demo Online:** [Acesse a Documentação Swagger (Ao Vivo)](https://pizzaria-api-gustavo-marcialis-a2dwbpfrdxgec4bp.centralus-01.azurewebsites.net/swagger/index.html)
+> **🔗 Demo Online:** [Acesse a Documentação Swagger (Ao Vivo)](https://pizzaria-api-gustavo-marcialis-a2dwbpfrdxgec4bp.centralus-01.azurewebsites.net)
 
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-purple)
 ![Azure](https://img.shields.io/badge/Azure-Cloud-blue)
