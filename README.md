@@ -1,76 +1,98 @@
-# Sistema de Pedidos
-  
-![C#](https://img.shields.io/badge/c%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white) ![.Net](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white) ![MicrosoftSQLServer](https://img.shields.io/badge/Microsoft%20SQL%20Server-CC2927?style=for-the-badge&logo=microsoft%20sql%20server&logoColor=white)
-  
-  
-## Problema Resolvido
-Otimização do fluxo de pedidos em pizzarias com atendimento presencial. Esta API serve como o motor central para eliminar a dependência de garçons em pedidos simples, permitindo que futuras interfaces (Mobile ou Web) se conectem para registrar pedidos vinculados diretamente às mesas.
+# Sistema de Pedidos API - Secure Cloud Architecture
 
-## Solução
-Uma **API RESTful** robusta que centraliza as regras de negócio e a segurança dos dados:
-- **Gestão de Pedidos:** Endpoints para criação, leitura, atualização e cancelamento de pedidos.
-- **Segurança Centralizada:** Validação de tokens e regras de acesso (RBAC) direto no backend, independente do frontend utilizado.
-- **Banco de Dados:** Persistência segura utilizando SQL Server.
+> **🔗 Demo Online:** [Acesse a Documentação Swagger (Ao Vivo)](https://pizzaria-api-gustavo-marcialis-a2dwbpfrdxgec4bp.centralus-01.azurewebsites.net/swagger/index.html)
 
-## Benefícios
-- **Escalabilidade:** A API está pronta para receber conexões de múltiplos frontends (App do Cliente, Painel da Cozinha, Totem).
-- **Integridade:** Garante que pedidos só mudem de status se as regras de negócio forem respeitadas.
-- **Auditoria:** Graças à autenticação centralizada, cada ação na cozinha é rastreável.
+![.NET 8](https://img.shields.io/badge/.NET-8.0-purple)
+![Azure](https://img.shields.io/badge/Azure-Cloud-blue)
+![Security](https://img.shields.io/badge/Security-SC--900-green)
+![Build Status](https://img.shields.io/github/actions/workflow/status/gustavo-marcialis/sistema-de-pedidos/main.yml)
+
+## Sobre o Projeto
+Este projeto é uma API RESTful desenvolvida em **.NET 8**, focada não apenas na lógica de negócios de uma pizzaria, mas principalmente na implementação de práticas modernas de **Cloud Computing** e **Segurança da Informação**, alinhadas aos objetivos da certificação **Microsoft SC-900 (Security, Compliance, and Identity Fundamentals)**.
+
+A aplicação simula um sistema onde clientes podem fazer pedidos (acesso público) e funcionários gerenciam esses pedidos com níveis de permissão distintos (acesso seguro).
+
+---
+
+## Implementações de Segurança & SC-900
+Este projeto serve como prova de conceito para os pilares de segurança da Microsoft:
+
+### 1. Identidade e Acesso (Identity & Access Management)
+* **Microsoft Entra ID (Azure AD):** A autenticação não é feita no banco de dados local, mas gerenciada pelo provedor de identidade na nuvem.
+* **RBAC (Role-Based Access Control):** Implementação do **Princípio do Menor Privilégio**.
+    * **Role `Pizzaiolo`:** Permissão para alterar status de pedidos.
+    * **Role `Garcom`:** Permissão para visualizar e anotar pedidos.
+    * **Guest:** Acesso anônimo limitado apenas à criação de pedidos.
+* **JWT (JSON Web Tokens):** Segurança stateless via tokens Bearer.
+
+### 2. Proteção de Infraestrutura (Infrastructure Security)
+* **Zero Trust:** A API "não confia" em ninguém por padrão. Rotas sensíveis exigem autenticação explícita (`[Authorize]`).
+* **Segurança de Segredos:** As Connection Strings de produção **não estão no código** (GitHub). Elas são injetadas via **Variáveis de Ambiente** no Azure App Service, mantendo o `appsettings.json` limpo.
+* **HTTPS:** Todo tráfego é forçado via SSL/TLS.
+
+### 3. Governança e Conformidade (Governance)
+* **Resource Locks:** Implementação de bloqueios de exclusão (`CanNotDelete`) no Grupo de Recursos do Azure para prevenir erros humanos e garantir a disponibilidade do serviço.
+* **Documentação Viva:** Swagger UI configurado com suporte a autenticação JWT para testes de penetração e auditoria de endpoints.
+
+---
+
+## ☁️ Arquitetura e DevOps
+O projeto utiliza uma esteira de CI/CD moderna:
+
+* **Cloud Provider:** Microsoft Azure (Region: Central US).
+* **Compute:** Azure App Service (PaaS) rodando em Linux/Windows.
+* **Database:**
+    * *Dev:* LocalDB (SQL Express).
+    * *Prod:* Azure SQL Database (preparado para conexão).
+* **CI/CD:** **GitHub Actions**. Qualquer commit na branch `main` dispara um workflow que compila o código .NET 8 e faz o deploy automático para a nuvem.
+
+---
 
 ## Tecnologias Utilizadas
-- **Linguagem/Framework:** .NET 7 (C#) Web API.
-- **ORM:** Entity Framework Core.
-- **Banco de Dados:** SQL Server.
-- **Identidade:** Microsoft Identity Web (Integração com Entra ID).
-- **Documentação:** Swagger/OpenAPI.
+* **C# / .NET 8 (LTS)**
+* **Entity Framework Core** (ORM)
+* **Microsoft.Identity.Web** (Integração Entra ID)
+* **Swagger / OpenAPI** (Documentação)
+* **Azure Portal & CLI**
 
 ---
 
-## Segurança & Identidade (SC-900)
-Este projeto aplica na prática os conceitos de segurança moderna exigidos na certificação **Microsoft SC-900**:
+## 🚀 Como Rodar Localmente
 
-### 1. Identidade como Perímetro
-A API não gerencia usuários ou senhas localmente. Ela delega essa responsabilidade para o **Microsoft Entra ID**.
-- O sistema valida Tokens JWT em cada requisição (`[Authorize]`).
-- Elimina o risco de vazamento de credenciais via SQL Injection ou acesso ao banco.
+### Pré-requisitos
+* SDK .NET 8.0
+* SQL Server (LocalDB)
 
-### 2. Privilégio Mínimo (RBAC)
-O código implementa verificação de **Roles** para garantir que cada funcionário tenha apenas o acesso necessário:
-- **Role `Pizzaiolo`:** Pode apenas alterar o *status* (Em preparo -> Pronto). Tentativas de editar o pedido são bloqueadas.
-- **Role `Garcom`:** Pode alterar os itens do pedido, mas é bloqueado de editar pedidos já finalizados.
-
-### 3. Zero Trust (Confiança Zero)
-A API adota a postura de "Nunca confiar, sempre verificar".
-- Não existe "rede segura": mesmo requisições locais exigem autenticação.
-- Validação explícita de entradas e identidades em todos os endpoints críticos.
+### Passos
+1.  Clone o repositório:
+    ```bash
+    git clone [https://github.com/gustavo-marcialis/sistema-de-pedidos.git](https://github.com/gustavo-marcialis/sistema-de-pedidos.git)
+    ```
+2.  Configure a string de conexão no `appsettings.json` (apontando para seu LocalDB).
+3.  Execute as migrations:
+    ```bash
+    dotnet ef database update
+    ```
+4.  Rode a API:
+    ```bash
+    dotnet run
+    ```
 
 ---
 
-## Arquitetura e Fluxo
+## Endpoints Principais
 
-O Backend atua como a fonte da verdade, protegendo os dados contra acessos não autorizados de qualquer origem.
+| Método | Rota | Permissão | Descrição |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/Cliente/pedidosCliente` | **Pública** | Cliente faz um novo pedido. |
+| `GET` | `/api/Cliente/pedidosCliente/{Mesa}` | **Pública** | Cliente consulta status do pedido. |
+| `GET` | `/api/API/pedidos` | 🔐 **Pizzaiolo/Garçom** | Lista todos os pedidos. |
+| `PUT` | `/api/API/alterarStatus/{id}` | 🔐 **Pizzaiolo** | Atualiza o status (ex: "No Forno"). |
 
-### Fluxo de Autorização (Exemplo: Cozinha)
-O diagrama abaixo ilustra como a API protege a operação de "Finalizar Pedido", garantindo que apenas o funcionário correto execute a ação.
+---
 
-```mermaid
-sequenceDiagram
-    participant App as Frontend (Futuro)
-    participant Azure as Microsoft Entra ID
-    participant API as .NET API (Este Repositório)
-    participant DB as SQL Server
+### Autor
+**Gustavo Marcialis**
+*Desenvolvedor FullStack*
 
-    Note over App, API: Fluxo OIDC (O Frontend obtém o Token)
-    App->>API: PUT /api/pedidos/10 (Bearer Token)
-    
-    Note over API: Validação Zero Trust
-    API->>API: Valida Assinatura do Token (Entra ID)
-    API->>API: Verifica Claims (Role: "Pizzaiolo")
-    
-    alt Autorizado
-        API->>DB: Atualiza Status para "Pronto"
-        DB-->>API: Confirmação
-        API-->>App: 200 OK
-    else Não Autorizado (ex: Garçom tentando finalizar)
-        API-->>App: 403 Forbidden
-    end
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/gustavo-marcialis/)
