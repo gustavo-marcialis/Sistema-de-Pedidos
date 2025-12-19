@@ -90,3 +90,17 @@ O projeto utiliza uma esteira de CI/CD moderna:
 | `PUT` | `/api/API/alterarStatus/{id}` | 🔐 **Pizzaiolo** | Atualiza o status (ex: "No Forno"). |
 
 ---
+
+## Roadmap & Melhorias Futuras
+
+### Segurança Avançada (SC-900)
+Este projeto utiliza o tier gratuito do Azure (Free Tier). Em um ambiente de produção empresarial com licenças **Microsoft Entra ID P1/P2**, as seguintes implementações seriam mandatórias:
+
+* **MFA via Acesso Condicional:** Configurar políticas para exigir Autenticação Multifator (MFA) obrigatoriamente para usuários com as roles `Pizzaiolo` e `Admin`, enquanto usuários `Garçom` poderiam ter acesso simplificado dentro da rede corporativa (Trusted Location).
+* **Identity Protection:** Monitoramento de riscos de entrada (ex: viagens impossíveis ou IP anônimo).
+
+### Gestão de Segredos & Monitoramento
+* **Azure Key Vault:** Migração das Connection Strings (atualmente em Variáveis de Ambiente) para o Azure Key Vault, implementando rotação automática de credenciais e acesso via Managed Identity.
+* **SIEM & Observabilidade:** Integração com **Azure Monitor** e **Application Insights** para detecção de anomalias em tempo real e criação de alertas de segurança (ex: múltiplos erros 401).
+* **Proteção de Rede:** O projeto herda a proteção DDoS Basic do Azure, mas em produção seria avaliado o uso do **Azure DDoS Protection Standard** e **Azure Front Door** (WAF) para mitigação de ataques na camada de aplicação.
+
