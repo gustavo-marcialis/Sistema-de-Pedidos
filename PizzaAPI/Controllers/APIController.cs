@@ -6,14 +6,13 @@ using System.Security.Claims;
 
 namespace PizzaAPI.Controllers
 {
-    // [Authorize] Protege todo o controlador. 
-    // Exige que a requisição tenha um Token válido do Azure AD.
+    // [Authorize] -> Tranca todas as portas. Só entra com crachá (Token).
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class APIController : ControllerBase
     {
-        // GET: Acesso de leitura (Permitido para qualquer usuário autenticado)
+        // GET: Leitura permitida para qualquer funcionário logado
         [HttpGet("pedidos")]
         public async Task<IActionResult> getAllAsync([FromServices] pizzariaContext contexto)
         {
@@ -21,17 +20,16 @@ namespace PizzaAPI.Controllers
             return Ok(pedidos);
         }
 
-        // GET por ID
         [HttpGet("pedidos/{id}")]
         public async Task<IActionResult> getByIdAsync(
-            [FromServices] pizzariaContext contexto,
+            [FromServices] pizzariaContext contexto, 
             [FromRoute] int id)
         {
             var pedidos = await contexto.Pedidos.AsNoTracking().FirstOrDefaultAsync(p => p.id == id);
             return pedidos == null ? NotFound() : Ok(pedidos);
         }
 
-        // PUT: Alteração de Pedido (Aplica Regras de Negócio e Segurança)
+        // PUT: Atualização com Regras de Segurança (RBAC)
         [HttpPut("pedidos/{id}")]
         public async Task<IActionResult> PutAsync(
             [FromServices] pizzariaContext contexto,
@@ -40,7 +38,7 @@ namespace PizzaAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest();
 
-            // SC-900: Verificação de Claims (Papéis) para Autorização Granular
+            // Verifica qual o cargo do usuário (Claims)
             bool isPizzaiolo = User.IsInRole("Pizzaiolo");
             bool isGarcom = User.IsInRole("Garcom");
 
@@ -49,24 +47,23 @@ namespace PizzaAPI.Controllers
 
             try
             {
-                // Regra de Privilégio Mínimo: Pizzaiolo só altera o STATUS
+                // Regra 1: Pizzaiolo só mexe no STATUS
                 if (isPizzaiolo && !isGarcom)
                 {
                     p.status = pedido.status;
-                    // Ignora silenciosamente alterações em mesa/sabores
+                    // Ignora mudanças de sabor/mesa
                 }
-                // Regra de Privilégio Mínimo: Garçom só altera o PEDIDO (se não estiver pronto)
+                // Regra 2: Garçom só edita o PEDIDO (se não estiver pronto)
                 else if (isGarcom && !isPizzaiolo)
                 {
                     if (p.status == "Pronto") 
-                        return BadRequest("Acesso Negado: Garçom não pode editar pedido que já está pronto.");
+                        return BadRequest("Acesso Negado: Garçom não edita pedido pronto.");
                     
                     p.Mesa = pedido.Mesa;
                     p.Sabores = pedido.Sabores;
                     p.Obs = pedido.Obs;
-                    // Garçom não pode mudar status aqui
                 }
-                // Admin ou usuários com múltiplos papéis (Gerente) têm acesso total
+                // Admin ou Gerente (quem tem os dois papeis) pode tudo
                 else 
                 {
                     p.Mesa = pedido.Mesa;
@@ -82,8 +79,7 @@ namespace PizzaAPI.Controllers
             catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
-        // DELETE: Proteção extra (apenas exemplo)
-        // Poderíamos exigir uma role específica como [Authorize(Roles = "Gerente")]
+        // DELETE: Pode manter restrito ou aberto a todos logados (conforme seu requisito)
         [HttpDelete("pedidos/{id}")]
         public async Task<IActionResult> DeleteAsync(
             [FromServices] pizzariaContext contexto,
