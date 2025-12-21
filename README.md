@@ -1,6 +1,8 @@
-# Sistema de Pedidos API - Secure Cloud Architecture
+# Pizza Pulse Back-End API - Secure Cloud Architecture
 
 > **🔗 Demo Online:** [Acesse a Documentação Swagger (Ao Vivo)](https://pizzaria-api-gustavo-marcialis-a2dwbpfrdxgec4bp.centralus-01.azurewebsites.net)
+
+Este é o Back-End que se conecta com o Front-End [Pizza Pulse Frontend](https://github.com/gustavo-marcialis/Pizza-Pulse-Frontend)
 
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-purple)
 ![Azure](https://img.shields.io/badge/Azure-Cloud-blue)
